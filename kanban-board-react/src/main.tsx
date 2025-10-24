@@ -17,7 +17,7 @@ async function loginAction({ request }: any) {
   return { success: true };
 }
 
-async function dashboardLoader({ request }: any) {
+async function dashboardLoader() {
   console.log("Dashboard loader called");
   return { success: true };
 }
