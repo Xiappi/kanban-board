@@ -1,4 +1,11 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, Router } from "react-router-dom";
+import { useAuth } from "../auth/AuthProvider";
+import DropdownMenu, { type DropdownEntry } from "./DropdownMenu";
+import Icon from "@mdi/react";
+import { mdiChevronDown } from "@mdi/js";
+import { useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../auth/firebase";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -7,6 +14,28 @@ const navLinks = [
 ];
 
 function Header() {
+  const navigate = useNavigate();
+
+  const signOutCallback = () => {
+    signOut(auth);
+    navigate("/login");
+  };
+
+  const dropdownEntries: DropdownEntry[] = [
+    {
+      key: "settings",
+      label: "Settings",
+      callback: () => {
+        navigate("/settings");
+      },
+    },
+    {
+      key: "signOut",
+      label: "Sign Out",
+      callback: signOutCallback,
+    },
+  ];
+  const { user } = useAuth();
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -32,12 +61,21 @@ function Header() {
                 {link.label}
               </NavLink>
             ))}
-            <Link
-              to="/login"
-              className="rounded-md bg-blue-600 text-white text-sm px-4 py-2 hover:bg-blue-700 transition-colors"
-            >
-              Login
-            </Link>
+            <DropdownMenu entries={dropdownEntries}>
+              <div className="cursor-pointer flex content-center ">
+                <span>{user?.email}</span>
+
+                <Icon path={mdiChevronDown} size={1} className="mt-[]" />
+                {/* 
+                <svg
+                  className="w-5 h-5 "
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"></path>
+                </svg> */}
+              </div>
+            </DropdownMenu>
           </nav>
         </div>
       </div>

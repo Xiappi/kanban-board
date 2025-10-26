@@ -4,13 +4,17 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   createUserWithEmailAndPassword,
+  browserLocalPersistence,
+  setPersistence,
   type User,
 } from "firebase/auth";
-import { auth, googleProvider } from "../firebase";
+import { auth, googleProvider } from "../auth/firebase";
 import Icon from "@mdi/react";
 import { mdiEyeOutline, mdiEyeOffOutline } from "@mdi/js";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +33,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
+      await setPersistence(auth, browserLocalPersistence);
       if (authMode === "login") {
         await signInWithEmailAndPassword(auth, email, password);
       } else {
@@ -36,6 +41,7 @@ export default function LoginPage() {
       }
       setEmail("");
       setPassword("");
+      navigate("/");
     } catch (err: any) {
       setError(err?.message ?? "Authentication failed.");
     } finally {
@@ -47,7 +53,9 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
+      await setPersistence(auth, browserLocalPersistence);
       await signInWithPopup(auth, googleProvider);
+      navigate("/");
     } catch (err: any) {
       setError(err?.message ?? "Google sign-in failed.");
     } finally {
