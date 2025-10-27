@@ -18,7 +18,7 @@ export default function ProtectedRoute() {
     <>
       <div className="app">
         <Header />
-        <main>
+        <main className="mx-[25%]">
           <Outlet /> {/* children render here */}
         </main>
         <Footer />
