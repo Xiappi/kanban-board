@@ -8,7 +8,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "../auth/firebase";
 
 const navLinks = [
-  { to: "/", label: "Home" },
+  { to: "/", label: "My Boards" },
   { to: "/dashboard", label: "Dashboard" },
   //   { to: "/about", label: "About" },
 ];
