@@ -1,12 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
-  onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithPopup,
   createUserWithEmailAndPassword,
   browserLocalPersistence,
   setPersistence,
-  type User,
 } from "firebase/auth";
 import { auth, googleProvider } from "../auth/firebase";
 import Icon from "@mdi/react";
