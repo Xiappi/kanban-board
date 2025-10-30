@@ -5,15 +5,15 @@ import {
   QueryDocumentSnapshot,
   type SnapshotOptions,
 } from "firebase/firestore";
-import type { CardBoardModel } from "../models/CardBoardModel";
+import type { BoardModel } from "../models/BoardModel";
 
-type CardBoardWrite = Omit<CardBoardModel, "id">;
+type BoardWrite = Omit<BoardModel, "id">;
 
-export const CardBoardModelConverter: FirestoreDataConverter<
-  CardBoardModel,
-  CardBoardWrite
+export const BoardModelConverter: FirestoreDataConverter<
+  BoardModel,
+  BoardWrite
 > = {
-  toFirestore(b: WithFieldValue<CardBoardModel>) {
+  toFirestore(b: WithFieldValue<BoardModel>) {
     return {
       name: b.name,
       description: b.description,
@@ -31,8 +31,8 @@ export const CardBoardModelConverter: FirestoreDataConverter<
   fromFirestore(
     snap: QueryDocumentSnapshot,
     options: SnapshotOptions
-  ): CardBoardModel {
-    const d = snap.data(options) as CardBoardModel;
+  ): BoardModel {
+    const d = snap.data(options) as BoardModel;
     return {
       id: snap.id,
       name: d.name,

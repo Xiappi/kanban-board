@@ -16,9 +16,9 @@ export default function ProtectedRoute() {
 
   return (
     <>
-      <div className="app">
+      <div className="app flex flex-col min-h-screen ">
         <Header />
-        <main className="mx-auto max-w-7xl px-6">
+        <main className="mx-auto max-w-7xl flex-grow">
           <Outlet /> {/* children render here */}
         </main>
         <Footer />

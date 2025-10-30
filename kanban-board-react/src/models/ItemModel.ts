@@ -1,9 +1,10 @@
-export interface CardBoardModel {
+export interface ItemModel {
   id: string;
   name: string;
   description: string;
   created: Date;
+  createdBy: string;
   lastModified: Date;
   lastModifiedBy: string;
-  user: string;
+  swimlaneId: string;
 }

@@ -1,5 +1,6 @@
 import CardBoard from "../components/CardBoard";
-import type { CardBoardModel } from "../models/CardBoardModel";
+import type { BoardModel } from "../models/BoardModel";
+import ModalBase from "../components/ModalBase";
 import Icon from "@mdi/react";
 import { mdiPlus } from "@mdi/js";
 import { useState, useEffect } from "react";
@@ -10,34 +11,37 @@ import {
   where,
   getDocs,
   setDoc,
+  deleteDoc,
   doc,
 } from "firebase/firestore";
 import { useAuth } from "../auth/AuthProvider";
-import { CardBoardModelConverter } from "../db/CardBoardModelConverter";
-import ModalBase from "../components/ModalBase";
+import { BoardModelConverter } from "../db/BoardModelConverter";
+import { useNavigate } from "react-router-dom";
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState<boolean>(false);
-  const [boards, setBoards] = useState<CardBoardModel[]>([]);
+  const [boards, setBoards] = useState<BoardModel[]>([]);
   const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState("");
   const [name, setName] = useState(String);
   const [description, setDescription] = useState(String);
 
   const { user } = useAuth();
   const collectionRef = collection(db, "boards").withConverter(
-    CardBoardModelConverter
+    BoardModelConverter
   );
   async function loadBoards() {
     if (!user?.email) {
       return;
     }
-
     try {
       setLoading(true);
 
       const q = query(collectionRef, where("user", "==", user?.email));
       const snapshot = await getDocs(q);
-      const boards: CardBoardModel[] = snapshot.docs.map((d) => d.data());
+      const boards: BoardModel[] = snapshot.docs.map((d) => d.data());
       setBoards(boards);
     } catch (err) {
       setBoards([]);
@@ -56,7 +60,7 @@ export default function HomePage() {
     }
     try {
       setLoading(true);
-      const newBoard: CardBoardModel = {
+      const newBoard: BoardModel = {
         id: "", // ignored on write
         name,
         description,
@@ -75,11 +79,44 @@ export default function HomePage() {
     }
   };
 
-  const closeCreateModal = () => {
+  async function deleteBoard() {
+    closeDeleteModal();
+
+    // 1) Update UI immediately
+    setBoards((prev) => prev.filter((b) => b.id !== deleteTargetId));
+
+    // 2) x persist delete to Firestore
+    try {
+      await deleteDoc(doc(db, "boards", deleteTargetId));
+    } catch (e) {
+      // rollback if needed or show a toast
+      console.error(e);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setOpenDeleteModal(true);
+    setDeleteTargetId(id);
+  }
+
+  async function handleOpen(id: string) {
+    navigate(`/board/${id}`);
+  }
+
+  async function handleEdit(id: string) {
+    alert("edit: " + id);
+  }
+
+  function closeCreateModal() {
     setOpenCreateModal(false);
     setName("");
     setDescription("");
-  };
+  }
+
+  function closeDeleteModal() {
+    setOpenDeleteModal(false);
+    setDeleteTargetId("");
+  }
 
   if (loading) {
     return (
@@ -109,7 +146,13 @@ export default function HomePage() {
     <>
       <div className="flex flex-wrap w-full gap-x-8 gap-y-6 mt-4">
         {boards.map((board) => (
-          <CardBoard key={board.id} model={board}></CardBoard>
+          <CardBoard
+            key={board.id}
+            model={board}
+            onOpen={handleOpen}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+          ></CardBoard>
         ))}
         <button
           onClick={() => setOpenCreateModal(true)}
@@ -119,6 +162,7 @@ export default function HomePage() {
         </button>
       </div>
 
+      {/* Create modal */}
       <ModalBase
         shouldOpen={openCreateModal}
         onClose={() => closeCreateModal()}
@@ -158,21 +202,45 @@ export default function HomePage() {
             </label>
           </div>
 
-          <div className="w-full flex flex-row-reverse  justify-between">
-            <button
-              type="submit"
-              className="text-white bg-blue-700 hover:bg-blue-800  font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center "
-            >
-              Submit
-            </button>
+          <div className="w-full flex justify-between">
             <button
               onClick={closeCreateModal}
               className="border border-[#d1d5db] rounded-lg bg-gray-50 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer"
             >
               Cancel
             </button>
+            <button
+              type="submit"
+              className="text-white bg-blue-700 hover:bg-blue-800  font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center "
+            >
+              Create
+            </button>
           </div>
         </form>
+      </ModalBase>
+
+      {/* Delete modal */}
+      <ModalBase shouldOpen={openDeleteModal} onClose={closeDeleteModal}>
+        <div>
+          <h2 className="text-2xl font-semibold pb-3">Are you sure</h2>
+          <p className="text-md text-gray-500 pb-5">
+            This action cannot be undone
+          </p>
+        </div>
+        <div className="w-full flex justify-between mt-5">
+          <button
+            onClick={closeDeleteModal}
+            className="border border-[#d1d5db] rounded-lg bg-gray-50 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={deleteBoard}
+            className="text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg l px-5 py-2.5 text-center"
+          >
+            Delete
+          </button>
+        </div>
       </ModalBase>
     </>
   );

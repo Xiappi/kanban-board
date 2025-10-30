@@ -5,7 +5,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import ErrorPage from "./pages/Error.tsx";
 import HomePage from "./pages/Home.tsx";
 import LoginPage from "./pages/Login.tsx";
-import Dashboard from "./pages/Dashboard.tsx";
+import Board from "./pages/Board.tsx";
 import { AuthProvider } from "./auth/AuthProvider.tsx";
 import ProtectedRoute from "./auth/ProtectedRoute.tsx";
 import SettingsPage from "./pages/Settings.tsx";
@@ -18,6 +18,7 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     element: <LoginPage />,
   },
+  // routes that SHOULD show header/footer
   {
     element: <ProtectedRoute />,
     errorElement: <ErrorPage />,
@@ -28,8 +29,8 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: "dashboard",
-        element: <Dashboard />,
+        path: "board/:boardId",
+        element: <Board />,
       },
       {
         path: "settings",
