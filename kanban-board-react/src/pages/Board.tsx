@@ -1,44 +1,40 @@
 import { useParams } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { useEffect, useState } from "react";
-import { collection, doc, getDoc } from "firebase/firestore";
-import { BoardModelConverter } from "../db/BoardModelConverter";
-import { db } from "../auth/firebase";
+import { doc, getDoc, getDocs, query } from "firebase/firestore";
 import Icon from "@mdi/react";
 import { mdiChevronDown, mdiMagnify } from "@mdi/js";
 import Swimlane from "../components/Swimlane";
+import type { SwimlaneModel } from "../models/Swimlane";
+import { boardCollectionRef, swimlaneCollectionRef } from "../db/collections";
 
 export default function Board() {
   const { boardId } = useParams();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [board, setBoard] = useState<any | null>(null);
+  const [swimlanes, setSwimlanes] = useState<SwimlaneModel[]>([]);
 
-  const collectionRef = collection(db, "boards").withConverter(
-    BoardModelConverter
-  );
+  async function loadSwimlanes() {
+    const q = query(swimlaneCollectionRef);
+    const snapshot = await getDocs(q);
+    const loadedSwimlanes: SwimlaneModel[] = snapshot.docs.map((d) => d.data());
+    setSwimlanes(loadedSwimlanes);
+  }
 
   async function loadBoard() {
-    if (!user?.email || !boardId) {
-      return;
-    }
-    try {
-      setLoading(true);
-      const ref = doc(collectionRef, boardId);
-      const snap = await getDoc(ref);
-      setBoard(snap.data() ?? null);
-    } catch (err) {
-      setBoard(null);
-      // TODO: Toaster
-    } finally {
-      setLoading(false);
-    }
+    const ref = doc(boardCollectionRef, boardId);
+    const snap = await getDoc(ref);
+    setBoard(snap.data());
   }
 
   useEffect(() => {
-    loadBoard();
+    setLoading(true);
+    Promise.all([loadBoard(), loadSwimlanes()]).then(() => {
+      setLoading(false);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email, boardId]);
+  }, []);
 
   if (loading) {
     return (
@@ -74,7 +70,7 @@ export default function Board() {
           <div className="flex">
             <button
               type="button"
-              className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb- focus:outline-none "
+              className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 focus:outline-none "
             >
               <div className="flex items-center">
                 <p>Add</p>
@@ -104,15 +100,14 @@ export default function Board() {
           <h2 className="text-lg font-semibold">{board.name}</h2>
         </div>
         {/* <div className="w-full h-screen grid grid-cols-4 gap-4 bg-gradient-to-br from-blue-700 via-blue-500 to-blue-300 rounded-lg shadow-md"> */}
-        <div className="w-full grid grid-cols-4 gap-4 h-[1200px] ">
-          <Swimlane
-            model={{
-              name: "adam",
-              id: "1",
-              colorPrimary: "blue",
-              colorSecondary: "blue",
-            }}
-          ></Swimlane>
+        <div
+          className={`w-full grid grid-cols-${swimlanes.length} gap-4 h-[1200px]`}
+        >
+          {swimlanes
+            .sort((a, b) => a.order - b.order)
+            .map((swimlane) => (
+              <Swimlane model={swimlane} key={swimlane.id}></Swimlane>
+            ))}
         </div>
       </div>
     </>

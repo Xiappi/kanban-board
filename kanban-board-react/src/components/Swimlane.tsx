@@ -1,5 +1,6 @@
 import type { ItemModel } from "../models/ItemModel";
 import type { SwimlaneModel } from "../models/Swimlane";
+import { getPaletteClasses } from "../providers/colorPaletteProvider";
 import Item from "./Item";
 import { useState } from "react";
 
@@ -28,17 +29,24 @@ export default function Swimlane({ model }: { model: SwimlaneModel }) {
     (page + 1) * itemsPerPage
   );
 
+  const { bg, border, text } = getPaletteClasses(model.colorPaletteKey);
+
   return (
     <div className="flex flex-col">
-      <div className="flex items-center justify-center h-15 border border-t-2 rounded-t-lg border-t-2 rounded-t-lg border-blue-200 bg-blue-400">
+      <div
+        className={`flex items-center justify-center h-16 rounded-t-lg border ${bg} ${border} ${text}`}
+      >
         <h3 className="text-2xl font-semibold">
           {model.name} ({allItems.length})
         </h3>
       </div>
       <div className="flex-1 bg-red-100 p-4 ">
         <div className="">
-          {visibleItems.map((item) => (
-            <Item model={testModel}></Item>
+          {visibleItems.map(() => (
+            <Item
+              model={testModel}
+              colorPaletteKey={model.colorPaletteKey}
+            ></Item>
           ))}
         </div>
       </div>

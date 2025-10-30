@@ -15,8 +15,8 @@ import {
   doc,
 } from "firebase/firestore";
 import { useAuth } from "../auth/AuthProvider";
-import { BoardModelConverter } from "../db/BoardModelConverter";
 import { useNavigate } from "react-router-dom";
+import { boardCollectionRef } from "../db/collections";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -29,9 +29,7 @@ export default function HomePage() {
   const [description, setDescription] = useState(String);
 
   const { user } = useAuth();
-  const collectionRef = collection(db, "boards").withConverter(
-    BoardModelConverter
-  );
+
   async function loadBoards() {
     if (!user?.email) {
       return;
@@ -39,7 +37,7 @@ export default function HomePage() {
     try {
       setLoading(true);
 
-      const q = query(collectionRef, where("user", "==", user?.email));
+      const q = query(boardCollectionRef, where("user", "==", user?.email));
       const snapshot = await getDocs(q);
       const boards: BoardModel[] = snapshot.docs.map((d) => d.data());
       setBoards(boards);
@@ -69,7 +67,7 @@ export default function HomePage() {
         lastModifiedBy: user.email!,
         user: user.email!,
       };
-      await setDoc(doc(collectionRef), newBoard);
+      await setDoc(doc(boardCollectionRef), newBoard);
       await loadBoards();
     } catch (err) {
       //TODO: Toaster

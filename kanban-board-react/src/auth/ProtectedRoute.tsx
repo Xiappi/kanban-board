@@ -16,11 +16,13 @@ export default function ProtectedRoute() {
 
   return (
     <>
-      <div className="app flex flex-col min-h-screen ">
+      <div className="app  min-h-screen items-center ">
         <Header />
-        <main className="mx-auto max-w-7xl flex-grow">
-          <Outlet /> {/* children render here */}
-        </main>
+        <div className="flex justify-center">
+          <main className=" max-w-7xl flex-grow">
+            <Outlet /> {/* children render here */}
+          </main>
+        </div>
         <Footer />
       </div>
     </>
