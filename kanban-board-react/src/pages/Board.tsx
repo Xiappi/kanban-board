@@ -7,6 +7,7 @@ import { mdiChevronDown, mdiMagnify } from "@mdi/js";
 import Swimlane from "../components/Swimlane";
 import type { SwimlaneModel } from "../models/Swimlane";
 import { boardCollectionRef, swimlaneCollectionRef } from "../db/collections";
+import type { ItemModel } from "../models/ItemModel";
 
 export default function Board() {
   const { boardId } = useParams();
@@ -14,6 +15,23 @@ export default function Board() {
   const [loading, setLoading] = useState(true);
   const [board, setBoard] = useState<any | null>(null);
   const [swimlanes, setSwimlanes] = useState<SwimlaneModel[]>([]);
+  // Simulated list (replace with your data)
+  const testModel: ItemModel = {
+    id: "1",
+    name: "Test Name",
+    description: "Test Desc",
+    created: new Date(),
+    createdBy: "Adam",
+    lastModified: new Date(),
+    lastModifiedBy: "Adam",
+    swimlaneId: "bVmsQrxHHFgspjfKxQxu",
+  };
+  const [allItems, setAllItems] = useState<ItemModel[]>(
+    Array.from({ length: 3 }, (_, i) => ({
+      ...testModel,
+      id: String(i + 1),
+    }))
+  );
 
   async function loadSwimlanes() {
     const q = query(swimlaneCollectionRef);
@@ -35,6 +53,19 @@ export default function Board() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function updateItemsOnDrop(droppedItemId: string, targetSwimlaneId: string) {
+    const foundItem = allItems.find((item) => item.id == droppedItemId);
+    if (foundItem) {
+      setAllItems([
+        ...allItems.filter((item) => item.id !== droppedItemId),
+        {
+          ...foundItem,
+          swimlaneId: targetSwimlaneId,
+        },
+      ]);
+    }
+  }
 
   if (loading) {
     return (
@@ -106,7 +137,14 @@ export default function Board() {
           {swimlanes
             .sort((a, b) => a.order - b.order)
             .map((swimlane) => (
-              <Swimlane model={swimlane} key={swimlane.id}></Swimlane>
+              <Swimlane
+                model={swimlane}
+                key={swimlane.id}
+                items={allItems.filter(
+                  (item) => item.swimlaneId == swimlane.id
+                )}
+                onDrop={updateItemsOnDrop}
+              ></Swimlane>
             ))}
         </div>
       </div>
