@@ -3,6 +3,8 @@ import type { SwimlaneModel } from "../models/Swimlane";
 import { getPaletteClasses } from "../providers/colorPaletteProvider";
 import Item from "./Item";
 import { useState } from "react";
+import Icon from "@mdi/react";
+import { mdiSelectPlace } from "@mdi/js";
 
 export default function Swimlane({
   model,
@@ -14,6 +16,7 @@ export default function Swimlane({
   onDrop: (itemId: string, swimlaneId: string) => void;
 }) {
   const [page, setPage] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const itemsPerPage = 8;
 
   const visibleItems = items.slice(
@@ -25,7 +28,13 @@ export default function Swimlane({
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault(); // Prevent default to allow drop
+    setIsDragging(true);
   };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
   const handleDragStart = (
     event: React.DragEvent<HTMLDivElement>,
     id: string
@@ -40,11 +49,10 @@ export default function Swimlane({
     targetSwimlaneId: string
   ) => {
     event.preventDefault();
+    setIsDragging(false);
 
     if (event.dataTransfer) {
       const draggedId = event.dataTransfer.getData("text/plain");
-      console.log("Dragged item: " + draggedId);
-      console.log("Dragged to: " + targetSwimlaneId);
 
       if (draggedId) {
         onDrop(draggedId, targetSwimlaneId);
@@ -53,7 +61,11 @@ export default function Swimlane({
   };
 
   return (
-    <div className="flex flex-col">
+    <div
+      className={`flex flex-col relative transition delay-75 ease-in-out ${
+        isDragging ? "-translate-y-1 scale-102" : ""
+      }`}
+    >
       <div
         className={`flex items-center justify-center h-16 rounded-t-lg border ${bg} ${border} ${text}`}
       >
@@ -62,11 +74,21 @@ export default function Swimlane({
         </h3>
       </div>
       <div
-        className="flex-1 shadow-lg p-4 "
+        className={`flex-1 bg-slate-50 border-r-1 border-b-1 border-l-1 border-gray-300 shadow-xl p-4 ${
+          isDragging ? "opacity-50" : ""
+        }`}
         onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e, model.id)}
       >
-        <div className="">
+        {isDragging && (
+          <div className="absolute top-1/2 left-1/2 z-50 transform -translate-x-1/2 -translate-y-1/2">
+            <div className="rounded-md border-2 border-dashed text-black px-4 py-2 rounded">
+              Move Here
+            </div>
+          </div>
+        )}
+        <div>
           {visibleItems.map((item) => (
             <Item
               model={item}

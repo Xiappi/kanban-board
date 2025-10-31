@@ -1,5 +1,4 @@
 import { useParams } from "react-router-dom";
-import { useAuth } from "../auth/AuthProvider";
 import { useEffect, useState } from "react";
 import { doc, getDoc, getDocs, query } from "firebase/firestore";
 import Icon from "@mdi/react";
@@ -11,10 +10,10 @@ import type { ItemModel } from "../models/ItemModel";
 
 export default function Board() {
   const { boardId } = useParams();
-  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [board, setBoard] = useState<any | null>(null);
   const [swimlanes, setSwimlanes] = useState<SwimlaneModel[]>([]);
+
   // Simulated list (replace with your data)
   const testModel: ItemModel = {
     id: "1",
@@ -27,7 +26,7 @@ export default function Board() {
     swimlaneId: "bVmsQrxHHFgspjfKxQxu",
   };
   const [allItems, setAllItems] = useState<ItemModel[]>(
-    Array.from({ length: 3 }, (_, i) => ({
+    Array.from({ length: 5 }, (_, i) => ({
       ...testModel,
       id: String(i + 1),
     }))
@@ -51,7 +50,6 @@ export default function Board() {
     Promise.all([loadBoard(), loadSwimlanes()]).then(() => {
       setLoading(false);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function updateItemsOnDrop(droppedItemId: string, targetSwimlaneId: string) {

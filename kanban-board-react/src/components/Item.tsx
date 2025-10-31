@@ -15,7 +15,7 @@ export default function Item({
   return (
     <>
       <div
-        className={`w-full h-30 flex flex-col bg-gray-100 border-l-6 ${border} rounded-xl px-4 pt-3 mb-3 transition delay-75 ease-in-out hover:-translate-y-1 hover:scale-105 cursor-pointer`}
+        className={`w-full h-30 flex flex-col bg-white border-l-6 ${border} rounded-xl px-4 pt-3 mb-3 transition delay-75 ease-in-out hover:-translate-y-1 hover:scale-105 cursor-pointer`}
         draggable
         onDragStart={(e) => handleDragStart(e, model.id)}
       >
