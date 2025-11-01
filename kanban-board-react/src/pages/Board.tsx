@@ -1,36 +1,42 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { doc, getDoc, getDocs, query } from "firebase/firestore";
+import { useEffect, useState, type FormEvent } from "react";
+import {
+  addDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import Icon from "@mdi/react";
-import { mdiChevronDown, mdiMagnify } from "@mdi/js";
+import { mdiMagnify } from "@mdi/js";
 import Swimlane from "../components/Swimlane";
 import type { SwimlaneModel } from "../models/Swimlane";
-import { boardCollectionRef, swimlaneCollectionRef } from "../db/collections";
+import {
+  boardCollectionRef,
+  itemsCollectionRef,
+  swimlaneCollectionRef,
+} from "../db/Collections";
 import type { ItemModel } from "../models/ItemModel";
+import ModalBase from "../components/ModalBase";
+import { useAuth } from "../auth/AuthProvider";
 
 export default function Board() {
   const { boardId } = useParams();
+
+  if (boardId === undefined) {
+    throw new Error(`Invalid board id: ${boardId}`);
+  }
+
   const [loading, setLoading] = useState(true);
+  const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [name, setName] = useState(String);
+  const [description, setDescription] = useState(String);
   const [board, setBoard] = useState<any | null>(null);
   const [swimlanes, setSwimlanes] = useState<SwimlaneModel[]>([]);
-
-  // Simulated list (replace with your data)
-  const testModel: ItemModel = {
-    id: "1",
-    name: "Test Name",
-    description: "Test Desc",
-    created: new Date(),
-    createdBy: "Adam",
-    lastModified: new Date(),
-    lastModifiedBy: "Adam",
-    swimlaneId: "bVmsQrxHHFgspjfKxQxu",
-  };
-  const [allItems, setAllItems] = useState<ItemModel[]>(
-    Array.from({ length: 5 }, (_, i) => ({
-      ...testModel,
-      id: String(i + 1),
-    }))
-  );
+  const { user } = useAuth();
+  const [allItems, setAllItems] = useState<ItemModel[]>([]);
 
   async function loadSwimlanes() {
     const q = query(swimlaneCollectionRef);
@@ -45,9 +51,42 @@ export default function Board() {
     setBoard(snap.data());
   }
 
+  async function loadItems() {
+    const q = query(itemsCollectionRef, where("boardId", "==", boardId));
+    const snapshot = await getDocs(q);
+    const items: ItemModel[] = snapshot.docs.map((d) => d.data());
+    setAllItems(items);
+  }
+
+  async function createItem(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const newItem = {
+      name: name,
+      description: description,
+      created: new Date(),
+      createdBy: user?.email ?? "",
+      lastModified: new Date(),
+      lastModifiedBy: user?.email ?? "",
+      swimlaneId: swimlanes.sort((a, b) => a.order - b.order)[0].id,
+      boardId: boardId ?? "",
+    };
+
+    const doc = await addDoc(itemsCollectionRef, newItem);
+    setAllItems([...allItems, { id: doc.id, ...newItem }]);
+
+    closeCreateModal();
+  }
+
+  async function closeCreateModal() {
+    setOpenCreateModal(false);
+    setName("");
+    setDescription("");
+  }
+
   useEffect(() => {
     setLoading(true);
-    Promise.all([loadBoard(), loadSwimlanes()]).then(() => {
+    Promise.all([loadBoard(), loadSwimlanes(), loadItems()]).then(() => {
       setLoading(false);
     });
   }, []);
@@ -55,6 +94,8 @@ export default function Board() {
   function updateItemsOnDrop(droppedItemId: string, targetSwimlaneId: string) {
     const foundItem = allItems.find((item) => item.id == droppedItemId);
     if (foundItem) {
+      const r = doc(itemsCollectionRef, droppedItemId);
+      updateDoc(r, { swimlaneId: targetSwimlaneId });
       setAllItems([
         ...allItems.filter((item) => item.id !== droppedItemId),
         {
@@ -99,11 +140,11 @@ export default function Board() {
           <div className="flex">
             <button
               type="button"
+              onClick={() => setOpenCreateModal(true)}
               className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 focus:outline-none "
             >
               <div className="flex items-center">
                 <p>Add</p>
-                <Icon path={mdiChevronDown} size={1}></Icon>
               </div>
             </button>
 
@@ -146,6 +187,63 @@ export default function Board() {
             ))}
         </div>
       </div>
+
+      {/* Create modal */}
+      <ModalBase
+        shouldOpen={openCreateModal}
+        onClose={() => closeCreateModal()}
+      >
+        <div>
+          <h2 className="text-2xl font-semibold pb-4">Create New Item</h2>
+        </div>
+        <form className="max-w-md mx-auto" onSubmit={createItem}>
+          <div className="relative z-0 w-full mb-5 group">
+            <input
+              name="floating_name"
+              id="floating_name"
+              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+              placeholder=" "
+              required
+              maxLength={25}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <label className="peer-focus:font-medium absolute text-sm text-gray-500 text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-blue-600 peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
+              Name
+            </label>
+          </div>
+          <div className="relative z-0 w-full mb-5 group">
+            <input
+              name="floating_description"
+              id="floating_description"
+              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+              placeholder=" "
+              required
+              maxLength={25}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+            <label className="peer-focus:font-medium absolute text-sm text-gray-500 text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
+              Description
+            </label>
+          </div>
+
+          <div className="w-full flex justify-between">
+            <button
+              onClick={closeCreateModal}
+              className="border border-[#d1d5db] rounded-lg bg-gray-50 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="text-white bg-blue-700 hover:bg-blue-800  font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center "
+            >
+              Create
+            </button>
+          </div>
+        </form>
+      </ModalBase>
     </>
   );
 }

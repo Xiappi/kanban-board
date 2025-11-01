@@ -6,7 +6,6 @@ import { mdiPlus } from "@mdi/js";
 import { useState, useEffect } from "react";
 import { db } from "../auth/firebase";
 import {
-  collection,
   query,
   where,
   getDocs,
@@ -16,7 +15,7 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "../auth/AuthProvider";
 import { useNavigate } from "react-router-dom";
-import { boardCollectionRef } from "../db/collections";
+import { boardCollectionRef } from "../db/Collections";
 
 export default function HomePage() {
   const navigate = useNavigate();

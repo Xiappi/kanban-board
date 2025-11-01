@@ -3,8 +3,6 @@ import type { SwimlaneModel } from "../models/Swimlane";
 import { getPaletteClasses } from "../providers/colorPaletteProvider";
 import Item from "./Item";
 import { useState } from "react";
-import Icon from "@mdi/react";
-import { mdiSelectPlace } from "@mdi/js";
 
 export default function Swimlane({
   model,

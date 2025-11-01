@@ -37,8 +37,11 @@ export const BoardModelConverter: FirestoreDataConverter<
       id: snap.id,
       name: d.name,
       description: d.description,
-      created: d.created,
-      lastModified: d.lastModified,
+      created: d.created instanceof Timestamp ? d.created.toDate() : d.created,
+      lastModified:
+        d.lastModified instanceof Timestamp
+          ? d.lastModified.toDate()
+          : d.lastModified,
       lastModifiedBy: d.lastModifiedBy,
       user: d.user,
     };

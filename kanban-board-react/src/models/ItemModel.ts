@@ -7,4 +7,5 @@ export interface ItemModel {
   lastModified: Date;
   lastModifiedBy: string;
   swimlaneId: string;
+  boardId: string;
 }
