@@ -21,6 +21,7 @@ import {
 import type { ItemModel } from "../models/ItemModel";
 import ModalBase from "../components/ModalBase";
 import { useAuth } from "../auth/AuthProvider";
+import Button from "../components/Button";
 
 export default function Board() {
   const { boardId } = useParams();
@@ -138,15 +139,9 @@ export default function Board() {
             Kanban Board
           </h3>
           <div className="flex">
-            <button
-              type="button"
-              onClick={() => setOpenCreateModal(true)}
-              className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 me-2 focus:outline-none "
-            >
-              <div className="flex items-center">
-                <p>Add</p>
-              </div>
-            </button>
+            <Button onClick={() => setOpenCreateModal(true)}>
+              <p>Add</p>
+            </Button>
 
             <div>
               <div className="relative w-75">

@@ -2,7 +2,7 @@ import CardBoard from "../components/CardBoard";
 import type { BoardModel } from "../models/BoardModel";
 import ModalBase from "../components/ModalBase";
 import Icon from "@mdi/react";
-import { mdiPlus } from "@mdi/js";
+import { mdiPlus, mdiMagnify, mdiMenu } from "@mdi/js";
 import { useState, useEffect } from "react";
 import { db } from "../auth/firebase";
 import {
@@ -14,13 +14,18 @@ import {
   doc,
 } from "firebase/firestore";
 import { useAuth } from "../auth/AuthProvider";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { boardCollectionRef } from "../db/Collections";
+import Button from "../components/Button";
+import type { DropdownEntry } from "../components/DropdownMenu";
+import DropdownMenu from "../components/DropdownMenu";
+import { RowActionsMenu, type RowAction } from "../components/RowActionsMenu";
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState<boolean>(false);
-  const [boards, setBoards] = useState<BoardModel[]>([]);
+  const [allBoards, setAllBoards] = useState<BoardModel[]>([]);
+  const [visibleBoards, setVisibleBoards] = useState<BoardModel[]>([]);
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState("");
@@ -39,9 +44,9 @@ export default function HomePage() {
       const q = query(boardCollectionRef, where("user", "==", user?.email));
       const snapshot = await getDocs(q);
       const boards: BoardModel[] = snapshot.docs.map((d) => d.data());
-      setBoards(boards);
+      setAllBoards(boards);
     } catch (err) {
-      setBoards([]);
+      setAllBoards([]);
       // TODO: Toaster
     } finally {
       setLoading(false);
@@ -80,7 +85,7 @@ export default function HomePage() {
     closeDeleteModal();
 
     // 1) Update UI immediately
-    setBoards((prev) => prev.filter((b) => b.id !== deleteTargetId));
+    setAllBoards((prev) => prev.filter((b) => b.id !== deleteTargetId));
 
     // 2) x persist delete to Firestore
     try {
@@ -141,22 +146,101 @@ export default function HomePage() {
 
   return (
     <>
-      <div className="flex flex-wrap w-full gap-x-8 gap-y-6 mt-4">
-        {boards.map((board) => (
-          <CardBoard
-            key={board.id}
-            model={board}
-            onOpen={handleOpen}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-          ></CardBoard>
-        ))}
-        <button
-          onClick={() => setOpenCreateModal(true)}
-          className="mt-7.5 mx-15 size-32 flex items-center border rounded-lg mt-3 shadow-lg border-gray-200 flex flex-wrap transition delay-75 ease-in-out hover:-translate-y-1 hover:scale-110 "
-        >
-          <Icon className="opacity-50" path={mdiPlus} size={5} />
-        </button>
+      <div className="flex flex-col relative overflow-x-auto shadow-b-lg sm:rounded-lg ">
+        <div className="p-4 bg-white justify-items-end">
+          <div className="flex items-center">
+            <Button onClick={() => setOpenCreateModal(true)}>
+              <p>Add New Board</p>
+              <Icon path={mdiPlus} size={0.75}></Icon>
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
+                <Icon path={mdiMagnify} size={1}></Icon>
+              </div>
+              <input
+                type="text"
+                id="table-search"
+                className="py-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50"
+                placeholder="Search for items"
+              />
+            </div>
+          </div>
+        </div>
+        <table className="w-full text-sm text-left rtl:text-right text-gray-500 ">
+          <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+            <tr>
+              <th scope="col" className="px-6 py-3">
+                Name
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Description
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Last Modified
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Last Modified By
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {allBoards.map((board) => {
+              const dropdownEntries: RowAction[] = [
+                {
+                  id: "open",
+                  label: "Open",
+                  onClick: () => handleOpen(board.id),
+                },
+                {
+                  id: "edit",
+                  label: "Edit",
+                  onClick: () => handleEdit(board.id),
+                },
+                {
+                  id: "delete",
+                  label: "Delete",
+                  onClick: () => handleDelete(board.id),
+                },
+              ];
+              return (
+                <tr
+                  onClick={() => handleOpen(board.id)}
+                  className="bg-white border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+                >
+                  <th
+                    scope="row"
+                    className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
+                  >
+                    {board.name}
+                  </th>
+                  <td className="px-6 py-4">{board.description}</td>
+                  <td className="px-6 py-4">
+                    {board.lastModified.toDateString()}
+                  </td>
+                  <td className="px-6 py-4">{board.lastModifiedBy}</td>
+                  <td
+                    className="px-6 py-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <RowActionsMenu actions={dropdownEntries}></RowActionsMenu>
+                  </td>
+                </tr>
+              );
+            })}
+            <tr className="bg-gray-50 border-t border-gray-200">
+              <td colSpan={5} className="px-6 py-6 text-center">
+                <Button onClick={() => setOpenCreateModal(true)}>
+                  <p>Add New Board</p>
+                  <Icon path={mdiPlus} size={0.75}></Icon>
+                </Button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       {/* Create modal */}
