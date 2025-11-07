@@ -43,10 +43,10 @@ const palettes: ColorPalette[] = [
   {
     name: "Green",
     key: "green",
-    colorPrimary: "green-400",
-    colorSecondary: "green-200",
-    bgClass: "bg-green-400",
-    borderClass: "border-green-200",
+    colorPrimary: "green-600",
+    colorSecondary: "green-400",
+    bgClass: "bg-green-600",
+    borderClass: "border-green-600",
     textClass: "text-white",
   },
   {

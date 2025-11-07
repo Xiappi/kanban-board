@@ -144,7 +144,7 @@ export default function Swimlane({
 
         {/* Body grows until max-h is reached, then scrolls */}
         <div
-          className={`bg-slate-50 border-r-1 border-b-1 border-l-1 border-gray-300 shadow-xl p-4 min-h-[13vh] ${
+          className={`bg-slate-50 border-r-1 border-b-1 border-l-1 border-gray-300 shadow-xl p-4 min-h-[17vh] ${
             isDragging ? "opacity-50" : ""
           }`}
           onDragOver={handleDragOver}
@@ -194,44 +194,46 @@ export default function Swimlane({
       {/* Footer (fixed height area below body) */}
       <div
         ref={footerRef}
-        className="flex flex-col items-center justify-between px-3 py-2 bg-gray-50 rounded-b-lg"
+        className={`flex flex-col items-center justify-between px-3 py-2 rounded-b-lg ${bg} ${border} `}
       >
-        <div className="flex items-center gap-2">
-          <button
-            className="px-3 py-1 border rounded disabled:opacity-50"
-            disabled={page === 0}
-            onClick={() => setPage(0)}
-            aria-label="First page"
-          >
-            <Icon path={mdiChevronDoubleLeft} size={0.75}></Icon>
-          </button>
-          <button
-            className="px-3 py-1 border rounded disabled:opacity-50"
-            disabled={page === 0}
-            onClick={() => setPage((p) => p - 1)}
-            aria-label="Previous page"
-          >
-            <Icon path={mdiChevronLeft} size={0.75}></Icon>
-          </button>
-          <button
-            className="px-3 py-1 border rounded disabled:opacity-50"
-            disabled={page >= totalPages - 1}
-            onClick={() => setPage((p) => p + 1)}
-            aria-label="Next page"
-          >
-            <Icon path={mdiChevronRight} size={0.75}></Icon>
-          </button>
-          <button
-            className="px-3 py-1 border rounded disabled:opacity-50"
-            disabled={page >= totalPages - 1}
-            onClick={() => setPage(totalPages - 1)}
-            aria-label="Last page"
-          >
-            <Icon path={mdiChevronDoubleRight} size={0.75}></Icon>
-          </button>
-        </div>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2">
+            <button
+              className={`px-3 py-1 border rounded disabled:opacity-50 ${text}`}
+              disabled={page === 0}
+              onClick={() => setPage(0)}
+              aria-label="First page"
+            >
+              <Icon path={mdiChevronDoubleLeft} size={0.75}></Icon>
+            </button>
+            <button
+              className={`px-3 py-1 border rounded disabled:opacity-50 ${text}`}
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+              aria-label="Previous page"
+            >
+              <Icon path={mdiChevronLeft} size={0.75}></Icon>
+            </button>
+            <button
+              className={`px-3 py-1 border rounded disabled:opacity-50 ${text}`}
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage((p) => p + 1)}
+              aria-label="Next page"
+            >
+              <Icon path={mdiChevronRight} size={0.75}></Icon>
+            </button>
+            <button
+              className={`px-3 py-1 border rounded disabled:opacity-50 ${text}`}
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage(totalPages - 1)}
+              aria-label="Last page"
+            >
+              <Icon path={mdiChevronDoubleRight} size={0.75}></Icon>
+            </button>
+          </div>
+        )}
 
-        <div className="text-xs text-gray-600 my-2">
+        <div className={`text-xs my-2 ${text}`}>
           Page {page + 1} of {totalPages} - Showing{" "}
           {items.length === 0
             ? 0

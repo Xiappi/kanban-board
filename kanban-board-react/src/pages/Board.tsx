@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   addDoc,
   doc,
@@ -34,12 +34,13 @@ export default function Board() {
   const [loadingBoards, setLoadingBoards] = useState(true);
   const [loadingItems, setLoadingItems] = useState(true);
   const [openCreateModal, setOpenCreateModal] = useState(false);
-  const [name, setName] = useState(String);
-  const [description, setDescription] = useState(String);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [board, setBoard] = useState<any | null>(null);
   const [swimlanes, setSwimlanes] = useState<SwimlaneModel[]>([]);
   const { user } = useAuth();
   const [allItems, setAllItems] = useState<ItemModel[]>([]);
+  const [search, setSearch] = useState<String>();
 
   async function loadSwimlanes() {
     const q = query(swimlaneCollectionRef);
@@ -71,6 +72,17 @@ export default function Board() {
     });
     return () => unsubscribe();
   }, [boardId]);
+
+  const filteredItems = useMemo(() => {
+    if (!search) return allItems;
+
+    const term = search.toLowerCase();
+    return allItems.filter((i) =>
+      [i.name, i.description, i.lastModifiedBy]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(term))
+    );
+  }, [allItems, search]);
 
   async function createItem(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -152,6 +164,7 @@ export default function Board() {
                   id="table-search"
                   className="py-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50"
                   placeholder="Search for items"
+                  onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
             </div>
@@ -164,7 +177,7 @@ export default function Board() {
               <div key={swimlane.id} className="flex-1 min-w-0 self-start">
                 <Swimlane
                   model={swimlane}
-                  items={allItems.filter(
+                  items={filteredItems.filter(
                     (item) => item.swimlaneId == swimlane.id
                   )}
                   onDrop={updateItemsOnDrop}
