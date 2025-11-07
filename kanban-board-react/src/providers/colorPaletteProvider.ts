@@ -58,6 +58,15 @@ const palettes: ColorPalette[] = [
     borderClass: "border-purple-200",
     textClass: "text-white",
   },
+  {
+    name: "Red",
+    key: "red",
+    colorPrimary: "red-400",
+    colorSecondary: "red-200",
+    bgClass: "bg-red-400",
+    borderClass: "border-red-200",
+    textClass: "text-white",
+  },
 ];
 
 export default function getColorPaletteFor(key: string): ColorPalette {

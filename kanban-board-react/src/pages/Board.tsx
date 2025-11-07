@@ -143,19 +143,16 @@ export default function Board() {
             </Button>
 
             <div>
-              <div className="relative w-75">
-                <input
-                  type="search"
-                  id="search-dropdown"
-                  className="block p-2.5 w-full z-20 text-sm text-gray-900 bg-gray-50 rounded-lg border-gray-50 border-2 border border-gray-300 "
-                  placeholder="Search Items"
-                />
-                <button
-                  type="submit"
-                  className="absolute top-0 end-0 p-2.5 text-sm font-medium h-full text-white bg-blue-700 rounded-e-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 "
-                >
+              <div className="relative">
+                <div className="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
                   <Icon path={mdiMagnify} size={1}></Icon>
-                </button>
+                </div>
+                <input
+                  type="text"
+                  id="table-search"
+                  className="py-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50"
+                  placeholder="Search for items"
+                />
               </div>
             </div>
           </div>
@@ -164,7 +161,7 @@ export default function Board() {
           {swimlanes
             .sort((a, b) => a.order - b.order)
             .map((swimlane) => (
-              <div key={swimlane.id} className="flex-1 min-w-0">
+              <div key={swimlane.id} className="flex-1 min-w-0 self-start">
                 <Swimlane
                   model={swimlane}
                   items={allItems.filter(
