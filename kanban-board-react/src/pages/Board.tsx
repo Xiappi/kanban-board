@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   updateDoc,
   where,
@@ -30,7 +31,8 @@ export default function Board() {
     throw new Error(`Invalid board id: ${boardId}`);
   }
 
-  const [loading, setLoading] = useState(true);
+  const [loadingBoards, setLoadingBoards] = useState(true);
+  const [loadingItems, setLoadingItems] = useState(true);
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [name, setName] = useState(String);
   const [description, setDescription] = useState(String);
@@ -52,12 +54,23 @@ export default function Board() {
     setBoard(snap.data());
   }
 
-  async function loadItems() {
+  useEffect(() => {
+    setLoadingBoards(true);
+    Promise.all([loadBoard(), loadSwimlanes()]).then(() => {
+      setLoadingBoards(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    setLoadingItems(true);
     const q = query(itemsCollectionRef, where("boardId", "==", boardId));
-    const snapshot = await getDocs(q);
-    const items: ItemModel[] = snapshot.docs.map((d) => d.data());
-    setAllItems(items);
-  }
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items: ItemModel[] = snapshot.docs.map((d) => d.data());
+      setAllItems(items);
+      setLoadingItems(false);
+    });
+    return () => unsubscribe();
+  }, [boardId]);
 
   async function createItem(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -73,9 +86,7 @@ export default function Board() {
       boardId: boardId ?? "",
     };
 
-    const doc = await addDoc(itemsCollectionRef, newItem);
-    setAllItems([...allItems, { id: doc.id, ...newItem }]);
-
+    await addDoc(itemsCollectionRef, newItem);
     closeCreateModal();
   }
 
@@ -85,27 +96,15 @@ export default function Board() {
     setDescription("");
   }
 
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([loadBoard(), loadSwimlanes(), loadItems()]).then(() => {
-      setLoading(false);
-    });
-  }, []);
-
   function updateItemsOnDrop(droppedItemId: string, targetSwimlaneId: string) {
     const foundItem = allItems.find((item) => item.id == droppedItemId);
     if (foundItem) {
       const r = doc(itemsCollectionRef, droppedItemId);
       updateDoc(r, { swimlaneId: targetSwimlaneId });
-      setAllItems([
-        ...allItems.filter((item) => item.id !== droppedItemId),
-        {
-          ...foundItem,
-          swimlaneId: targetSwimlaneId,
-        },
-      ]);
     }
   }
+
+  const loading = loadingBoards || loadingItems;
 
   if (loading) {
     return (
@@ -161,9 +160,7 @@ export default function Board() {
             </div>
           </div>
         </div>
-        <div
-          className={`w-full grid grid-cols-${swimlanes.length} gap-4 h-[1200px]`}
-        >
+        <div className={`w-full grid grid-cols-${swimlanes.length} gap-4`}>
           {swimlanes
             .sort((a, b) => a.order - b.order)
             .map((swimlane) => (
