@@ -160,18 +160,19 @@ export default function Board() {
             </div>
           </div>
         </div>
-        <div className={`w-full grid grid-cols-${swimlanes.length} gap-4`}>
+        <div className="w-full flex items-start gap-4">
           {swimlanes
             .sort((a, b) => a.order - b.order)
             .map((swimlane) => (
-              <Swimlane
-                model={swimlane}
-                key={swimlane.id}
-                items={allItems.filter(
-                  (item) => item.swimlaneId == swimlane.id
-                )}
-                onDrop={updateItemsOnDrop}
-              ></Swimlane>
+              <div key={swimlane.id} className="flex-1 min-w-0">
+                <Swimlane
+                  model={swimlane}
+                  items={allItems.filter(
+                    (item) => item.swimlaneId == swimlane.id
+                  )}
+                  onDrop={updateItemsOnDrop}
+                ></Swimlane>
+              </div>
             ))}
         </div>
       </div>

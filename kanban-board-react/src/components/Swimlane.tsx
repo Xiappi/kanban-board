@@ -13,14 +13,7 @@ export default function Swimlane({
   items: ItemModel[];
   onDrop: (itemId: string, swimlaneId: string) => void;
 }) {
-  const [page, setPage] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const itemsPerPage = 8;
-
-  const visibleItems = items.slice(
-    page * itemsPerPage,
-    (page + 1) * itemsPerPage
-  );
 
   const { bg, border, text } = getPaletteClasses(model.colorPaletteKey);
 
@@ -60,10 +53,11 @@ export default function Swimlane({
 
   return (
     <div
-      className={`flex flex-col relative transition delay-75 ease-in-out ${
+      className={`flex flex-col relative min-h-[40vh] max-h-[78vh] transition delay-75 ease-in-out  ${
         isDragging ? "-translate-y-1 scale-102" : ""
-      }`}
+      } `}
     >
+      {/* Header stays fixed height */}
       <div
         className={`flex items-center justify-center h-16 rounded-t-lg border ${bg} ${border} ${text}`}
       >
@@ -71,48 +65,34 @@ export default function Swimlane({
           {model.name} ({items.length})
         </h3>
       </div>
+
+      {/* Body grows until max-h is reached, then scrolls */}
       <div
         className={`flex-1 bg-slate-50 border-r-1 border-b-1 border-l-1 border-gray-300 shadow-xl p-4 ${
           isDragging ? "opacity-50" : ""
-        }`}
+        } overflow-y-auto`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e, model.id)}
       >
         {isDragging && (
-          <div className="absolute top-1/2 left-1/2 z-50 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="rounded-md border-2 border-dashed text-black px-4 py-2 rounded">
+          <div className="absolute top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2">
+            <div className="rounded-md border-2 border-dashed text-black px-4 py-2">
               Move Here
             </div>
           </div>
         )}
-        <div>
-          {visibleItems.map((item) => (
+
+        <div className="space-y-2">
+          {items.map((item) => (
             <Item
+              key={item.id}
               model={item}
               colorPaletteKey={model.colorPaletteKey}
               handleDragStart={handleDragStart}
-              key={item.id}
-            ></Item>
+            />
           ))}
         </div>
-      </div>
-
-      <div className="flex justify-center gap-2 mt-2">
-        <button
-          disabled={page === 0}
-          onClick={() => setPage((p) => p - 1)}
-          className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
-        >
-          Prev
-        </button>
-        <button
-          disabled={(page + 1) * itemsPerPage >= items.length}
-          onClick={() => setPage((p) => p + 1)}
-          className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
-        >
-          Next
-        </button>
       </div>
     </div>
   );
