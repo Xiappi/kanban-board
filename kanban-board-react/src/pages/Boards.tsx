@@ -1,69 +1,79 @@
-import CardBoard from "../components/CardBoard";
 import type { BoardModel } from "../models/BoardModel";
 import ModalBase from "../components/ModalBase";
 import Icon from "@mdi/react";
-import { mdiPlus, mdiMagnify, mdiMenu } from "@mdi/js";
-import { useState, useEffect } from "react";
+import { mdiPlus, mdiMagnify } from "@mdi/js";
+import { useState, useEffect, useMemo } from "react";
 import { db } from "../auth/firebase";
 import {
   query,
   where,
-  getDocs,
-  setDoc,
   deleteDoc,
   doc,
+  updateDoc,
+  onSnapshot,
+  addDoc,
 } from "firebase/firestore";
 import { useAuth } from "../auth/AuthProvider";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { boardCollectionRef } from "../db/Collections";
 import Button from "../components/Button";
-import type { DropdownEntry } from "../components/DropdownMenu";
-import DropdownMenu from "../components/DropdownMenu";
 import { RowActionsMenu, type RowAction } from "../components/RowActionsMenu";
+import FloatingInput from "../components/FloatingInput";
+import Toaster from "../components/Toaster";
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [allBoards, setAllBoards] = useState<BoardModel[]>([]);
-  const [visibleBoards, setVisibleBoards] = useState<BoardModel[]>([]);
   const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState("");
-  const [name, setName] = useState(String);
-  const [description, setDescription] = useState(String);
+  const [editTargetId, setEditTargetId] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [search, setSearch] = useState("");
 
   const { user } = useAuth();
 
-  async function loadBoards() {
-    if (!user?.email) {
-      return;
-    }
-    try {
-      setLoading(true);
+  useEffect(() => {
+    if (!user?.email) return;
 
-      const q = query(boardCollectionRef, where("user", "==", user?.email));
-      const snapshot = await getDocs(q);
+    setLoading(true);
+
+    const q = query(boardCollectionRef, where("user", "==", user.email));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const boards: BoardModel[] = snapshot.docs.map((d) => d.data());
       setAllBoards(boards);
-    } catch (err) {
-      setAllBoards([]);
-      // TODO: Toaster
-    } finally {
       setLoading(false);
-    }
-  }
-  useEffect(() => {
-    loadBoards();
-  }, []);
+    });
 
-  const createBoard = async () => {
+    return () => unsubscribe();
+  }, [user?.email]);
+
+  const visibleBoards = useMemo(() => {
+    if (!search) return allBoards;
+
+    const term = search.toLowerCase();
+    return allBoards.filter((b) =>
+      [b.name, b.description, b.lastModifiedBy]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(term))
+    );
+  }, [allBoards, search]);
+
+  async function createBoard(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    closeCreateModal();
+
     if (!user?.email) {
       return;
     }
+
     try {
-      setLoading(true);
-      const newBoard: BoardModel = {
-        id: "", // ignored on write
+      type tempBoard = Omit<BoardModel, "id">;
+      const newBoard: tempBoard = {
         name,
         description,
         created: new Date(),
@@ -71,28 +81,37 @@ export default function HomePage() {
         lastModifiedBy: user.email!,
         user: user.email!,
       };
-      await setDoc(doc(boardCollectionRef), newBoard);
-      await loadBoards();
-    } catch (err) {
-      //TODO: Toaster
-    } finally {
-      setLoading(false);
-      closeCreateModal();
+      // The subscription to the firestore db will handle updating the screen
+      await addDoc(boardCollectionRef, newBoard);
+    } catch (e) {
+      Toaster.error("Failed to create board");
     }
-  };
+  }
+
+  async function updateBoard(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    closeEditModal();
+
+    try {
+      const boardRef = doc(boardCollectionRef, editTargetId);
+
+      updateDoc(boardRef, {
+        name: name,
+        description: description,
+        lastModified: new Date(),
+        lastModifiedBy: user?.email ?? "",
+      });
+    } catch (e) {
+      Toaster.error("Failed to create board");
+    }
+  }
 
   async function deleteBoard() {
     closeDeleteModal();
-
-    // 1) Update UI immediately
-    setAllBoards((prev) => prev.filter((b) => b.id !== deleteTargetId));
-
-    // 2) x persist delete to Firestore
     try {
       await deleteDoc(doc(db, "boards", deleteTargetId));
     } catch (e) {
-      // rollback if needed or show a toast
-      console.error(e);
+      Toaster.error("Failed to create board");
     }
   }
 
@@ -106,13 +125,24 @@ export default function HomePage() {
   }
 
   async function handleEdit(id: string) {
-    alert("edit: " + id);
+    setOpenEditModal(true);
+    setEditTargetId(id);
+    const board = allBoards.find((board) => board.id === id);
+    setName(board!.name);
+    setDescription(board!.description);
   }
 
   function closeCreateModal() {
     setOpenCreateModal(false);
     setName("");
     setDescription("");
+  }
+
+  function closeEditModal() {
+    setOpenEditModal(false);
+    setName("");
+    setDescription("");
+    setEditTargetId("");
   }
 
   function closeDeleteModal() {
@@ -147,23 +177,29 @@ export default function HomePage() {
   return (
     <>
       <div className="flex flex-col relative overflow-x-auto shadow-b-lg sm:rounded-lg ">
-        <div className="p-4 bg-white justify-items-end">
-          <div className="flex items-center">
-            <Button onClick={() => setOpenCreateModal(true)}>
-              <p>Add New Board</p>
-              <Icon path={mdiPlus} size={0.75}></Icon>
-            </Button>
+        <div className="p-4 bg-white justify-items-end pb-8">
+          <div className="flex w-full justify-between">
+            <h3 className="text-3xl border-b-2 border-blue-300 pb-1">
+              My Boards
+            </h3>
+            <div className="flex items-center">
+              <Button onClick={() => setOpenCreateModal(true)}>
+                <p>Add New Board</p>
+                <Icon path={mdiPlus} size={0.75}></Icon>
+              </Button>
 
-            <div className="relative">
-              <div className="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
-                <Icon path={mdiMagnify} size={1}></Icon>
+              <div className="relative">
+                <div className="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
+                  <Icon path={mdiMagnify} size={1}></Icon>
+                </div>
+                <input
+                  type="text"
+                  id="table-search"
+                  className="py-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50"
+                  placeholder="Search for items"
+                  onChange={(e) => setSearch(e.target.value)}
+                />
               </div>
-              <input
-                type="text"
-                id="table-search"
-                className="py-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50"
-                placeholder="Search for items"
-              />
             </div>
           </div>
         </div>
@@ -188,7 +224,7 @@ export default function HomePage() {
             </tr>
           </thead>
           <tbody>
-            {allBoards.map((board) => {
+            {visibleBoards.map((board) => {
               const dropdownEntries: RowAction[] = [
                 {
                   id: "open",
@@ -210,6 +246,7 @@ export default function HomePage() {
                 <tr
                   onClick={() => handleOpen(board.id)}
                   className="bg-white border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+                  key={board.id}
                 >
                   <th
                     scope="row"
@@ -252,50 +289,52 @@ export default function HomePage() {
           <h2 className="text-2xl font-semibold pb-4">Create New Board</h2>
         </div>
         <form className="max-w-md mx-auto" onSubmit={createBoard}>
-          <div className="relative z-0 w-full mb-5 group">
-            <input
-              name="floating_name"
-              id="floating_name"
-              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
-              placeholder=" "
-              required
-              maxLength={25}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <label className="peer-focus:font-medium absolute text-sm text-gray-500 text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-blue-600 peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
-              Name
-            </label>
-          </div>
-          <div className="relative z-0 w-full mb-5 group">
-            <input
-              name="floating_description"
-              id="floating_description"
-              className="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
-              placeholder=" "
-              required
-              maxLength={25}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-            <label className="peer-focus:font-medium absolute text-sm text-gray-500 text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 peer-focus:text-blue-600 peer-focus:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
-              Description
-            </label>
-          </div>
+          <FloatingInput
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          ></FloatingInput>
+          <FloatingInput
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          ></FloatingInput>
 
           <div className="w-full flex justify-between">
-            <button
-              onClick={closeCreateModal}
-              className="border border-[#d1d5db] rounded-lg bg-gray-50 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer"
-            >
+            <Button variant="secondary" onClick={closeCreateModal}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="text-white bg-blue-700 hover:bg-blue-800  font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center "
-            >
+            </Button>
+            <Button variant="primary" type="submit">
               Create
-            </button>
+            </Button>
+          </div>
+        </form>
+      </ModalBase>
+
+      {/* Edit modal */}
+      <ModalBase shouldOpen={openEditModal} onClose={closeEditModal}>
+        <div>
+          <h2 className="text-2xl font-semibold pb-4">Create New Board</h2>
+        </div>
+        <form className="max-w-md mx-auto" onSubmit={(e) => updateBoard(e)}>
+          <FloatingInput
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          ></FloatingInput>
+          <FloatingInput
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          ></FloatingInput>
+
+          <div className="w-full flex justify-between">
+            <Button variant="secondary" onClick={closeEditModal}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit">
+              Save
+            </Button>
           </div>
         </form>
       </ModalBase>
@@ -309,18 +348,12 @@ export default function HomePage() {
           </p>
         </div>
         <div className="w-full flex justify-between mt-5">
-          <button
-            onClick={closeDeleteModal}
-            className="border border-[#d1d5db] rounded-lg bg-gray-50 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer"
-          >
+          <Button variant="secondary" onClick={closeDeleteModal}>
             Cancel
-          </button>
-          <button
-            onClick={deleteBoard}
-            className="text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg l px-5 py-2.5 text-center"
-          >
+          </Button>
+          <Button variant="danger" onClick={deleteBoard}>
             Delete
-          </button>
+          </Button>
         </div>
       </ModalBase>
     </>

@@ -135,10 +135,10 @@ export default function Board() {
     <>
       <div className="m-4 flex flex-col flex-grow">
         <div className="flex justify-between">
-          <h3 className="text-3xl border-b-2 border-blue-300 pb-2 ">
-            Kanban Board
+          <h3 className="text-3xl border-b-2 border-blue-300 pb-1 mb-8">
+            {board.name}
           </h3>
-          <div className="flex">
+          <div className="flex h-full">
             <Button onClick={() => setOpenCreateModal(true)}>
               <p>Add</p>
             </Button>
@@ -161,10 +161,6 @@ export default function Board() {
             </div>
           </div>
         </div>
-        <div className="my-5 w-full flex items-center pl-3 h-10 rounded-lg bg-gradient-to-br from-gray-300 via-white to-white ">
-          <h2 className="text-lg font-semibold">{board.name}</h2>
-        </div>
-        {/* <div className="w-full h-screen grid grid-cols-4 gap-4 bg-gradient-to-br from-blue-700 via-blue-500 to-blue-300 rounded-lg shadow-md"> */}
         <div
           className={`w-full grid grid-cols-${swimlanes.length} gap-4 h-[1200px]`}
         >
