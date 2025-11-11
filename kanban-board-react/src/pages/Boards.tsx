@@ -20,7 +20,7 @@ import Button from "../components/Button";
 import { RowActionsMenu, type RowAction } from "../components/RowActionsMenu";
 import FloatingInput from "../components/FloatingInput";
 import Toaster from "../components/Toaster";
-import LoadingSpinner from "../components/LoadingSpinner";
+import { SpinnerOverlay } from "../components/SpinnerOverlay";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -152,7 +152,14 @@ export default function HomePage() {
   }
 
   if (loading) {
-    return <LoadingSpinner></LoadingSpinner>;
+    return (
+      <SpinnerOverlay
+        loading={loading}
+        showAfter={200}
+        minVisible={400}
+        fadeMs={200}
+      />
+    );
   }
 
   return (

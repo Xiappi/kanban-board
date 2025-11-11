@@ -23,7 +23,7 @@ import type { ItemModel } from "../models/ItemModel";
 import ModalBase from "../components/ModalBase";
 import { useAuth } from "../auth/AuthProvider";
 import Button from "../components/Button";
-import LoadingSpinner from "../components/LoadingSpinner";
+import { SpinnerOverlay } from "../components/SpinnerOverlay";
 
 export default function Board() {
   const { boardId } = useParams();
@@ -120,12 +120,19 @@ export default function Board() {
   const loading = loadingBoards || loadingItems;
 
   if (loading) {
-    return <LoadingSpinner></LoadingSpinner>;
+    return (
+      <SpinnerOverlay
+        loading={loading}
+        showAfter={200}
+        minVisible={400}
+        fadeMs={200}
+      />
+    );
   }
 
   return (
     <>
-      <div className="m-4 flex flex-col flex-grow">
+      <div className="m-4 flex flex-col flex-grow animate-fadeIn transition-opacity duration-300">
         <div className="flex justify-between">
           <h3 className="text-3xl border-b-2 border-blue-300 pb-1 mb-8">
             {board.name}
