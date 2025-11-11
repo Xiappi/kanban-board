@@ -67,6 +67,21 @@ export default function Swimlane({
   };
 
   // RESIZE LOGIC
+
+  // simple fade state
+  const [showPage, setShowPage] = useState(true);
+
+  // helper to animate page transitions
+  function animateTo(nextPage: number) {
+    if (nextPage === page) return;
+    setShowPage(false); // fade out
+    setTimeout(() => {
+      setPage(nextPage); // swap page
+      // small rAF ensures the DOM updates before we fade back in
+      requestAnimationFrame(() => setShowPage(true)); // fade in
+    }, 250); // keep in sync with duration below
+  }
+
   // tune these to your markup
   const gapPx = 12; // vertical gap between items (e.g., Item has `mb-3` => 12px)
   const bodyPaddingPx = 32; // p-4 => 16 top + 16 bottom
@@ -142,9 +157,8 @@ export default function Swimlane({
           </h3>
         </div>
 
-        {/* Body grows until max-h is reached, then scrolls */}
         <div
-          className={`bg-slate-50 border-r-1 border-b-1 border-l-1 border-gray-300 shadow-xl p-4 min-h-[17vh] ${
+          className={`bg-slate-50 border-r-1 border-b-1 border-l-1 border-gray-300 shadow-xl p-4 min-h-[17vh]  ${
             isDragging ? "opacity-50" : ""
           }`}
           onDragOver={handleDragOver}
@@ -153,7 +167,7 @@ export default function Swimlane({
           ref={bodyRef}
         >
           {isDragging && (
-            <div className="absolute top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2">
+            <div className="pointer-events-none absolute top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2">
               <div className="rounded-md border-2 border-dashed text-black px-4 py-2">
                 Move Here
               </div>
@@ -181,14 +195,26 @@ export default function Swimlane({
             </div>
           </div>
 
-          {pagedItems.map((item) => (
-            <Item
-              key={item.id}
-              model={item}
-              colorPaletteKey={model.colorPaletteKey}
-              handleDragStart={handleDragStart}
-            />
-          ))}
+          {/* animated container around the items */}
+          <div
+            aria-busy={!showPage}
+            className={[
+              "transition-all duration-250", // keep in sync with setTimeout
+              "will-change-transform opacity-0 translate-y-1",
+              showPage
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-1",
+            ].join(" ")}
+          >
+            {pagedItems.map((item) => (
+              <Item
+                key={item.id}
+                model={item}
+                colorPaletteKey={model.colorPaletteKey}
+                handleDragStart={handleDragStart}
+              />
+            ))}
+          </div>
         </div>
       </div>
       {/* Footer (fixed height area below body) */}
@@ -199,33 +225,33 @@ export default function Swimlane({
         {totalPages > 1 && (
           <div className="flex items-center gap-2">
             <button
-              className={`px-3 py-1 border rounded disabled:opacity-50 ${text}`}
+              className={`cursor-pointer hover:bg-white/20 px-3 py-1 border rounded disabled:opacity-50 ${text}`}
               disabled={page === 0}
-              onClick={() => setPage(0)}
+              onClick={() => animateTo(0)}
               aria-label="First page"
             >
               <Icon path={mdiChevronDoubleLeft} size={0.75}></Icon>
             </button>
             <button
-              className={`px-3 py-1 border rounded disabled:opacity-50 ${text}`}
+              className={`cursor-pointer hover:bg-white/20  px-3 py-1 border rounded disabled:opacity-50 ${text}`}
               disabled={page === 0}
-              onClick={() => setPage((p) => p - 1)}
+              onClick={() => animateTo(page - 1)}
               aria-label="Previous page"
             >
               <Icon path={mdiChevronLeft} size={0.75}></Icon>
             </button>
             <button
-              className={`px-3 py-1 border rounded disabled:opacity-50 ${text}`}
+              className={`cursor-pointer hover:bg-white/20  px-3 py-1 border rounded disabled:opacity-50 ${text}`}
               disabled={page >= totalPages - 1}
-              onClick={() => setPage((p) => p + 1)}
+              onClick={() => animateTo(page + 1)}
               aria-label="Next page"
             >
               <Icon path={mdiChevronRight} size={0.75}></Icon>
             </button>
             <button
-              className={`px-3 py-1 border rounded disabled:opacity-50 ${text}`}
+              className={`cursor-pointer hover:bg-white/20 px-3 py-1 border rounded disabled:opacity-50 ${text}`}
               disabled={page >= totalPages - 1}
-              onClick={() => setPage(totalPages - 1)}
+              onClick={() => animateTo(totalPages - 1)}
               aria-label="Last page"
             >
               <Icon path={mdiChevronDoubleRight} size={0.75}></Icon>

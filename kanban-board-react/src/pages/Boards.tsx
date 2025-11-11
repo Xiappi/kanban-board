@@ -177,7 +177,7 @@ export default function HomePage() {
   return (
     <>
       <div className="flex flex-col relative overflow-x-auto shadow-b-lg sm:rounded-lg ">
-        <div className="p-4 bg-white justify-items-end pb-8">
+        <div className="p-4 bg-white justify-items-end mt-8 pb-8">
           <div className="flex w-full justify-between">
             <h3 className="text-3xl border-b-2 border-blue-300 pb-1">
               My Boards

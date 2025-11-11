@@ -174,7 +174,10 @@ export default function Board() {
           {swimlanes
             .sort((a, b) => a.order - b.order)
             .map((swimlane) => (
-              <div key={swimlane.id} className="flex-1 min-w-0 self-start">
+              <div
+                key={swimlane.id}
+                className="flex-1 min-w-0 transition-all duration-300"
+              >
                 <Swimlane
                   model={swimlane}
                   items={filteredItems.filter(

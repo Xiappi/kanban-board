@@ -130,7 +130,7 @@ export function RowActionsMenu({
               disabled={a.disabled}
               onClick={handleItemClick(a.onClick, a.disabled)}
               className={[
-                "w-full px-3 py-2 text-left text-sm focus:outline-none",
+                "w-full px-3 py-2 text-left text-sm focus:outline-none cursor-pointer",
                 a.disabled
                   ? "text-gray-400 cursor-not-allowed"
                   : "text-gray-700 hover:bg-gray-50 focus:bg-gray-50",

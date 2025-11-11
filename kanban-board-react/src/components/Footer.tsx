@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
+import { mdiCopyright } from "@mdi/js";
+import Icon from "@mdi/react";
 
 export default function Footer() {
   return (
-    <footer className="bg-blue-300 border-t border-gray-200 mt-10">
+    <footer className="bg-blue-300 border-t border-gray-200 mt-10 w-full">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         {/* Left side: logo or brand */}
         <Link
@@ -26,8 +28,10 @@ export default function Footer() {
         </nav>
 
         {/* Right side: copyright */}
-        <p className="text-xs text-gray-500">
-          © {new Date().getFullYear()} Kanban Board. All rights reserved.
+
+        <p className="text-xs text-gray-500 flex items-center">
+          <Icon path={mdiCopyright} size={0.5}></Icon>
+          {new Date().getFullYear()} Kanban Board. All rights reserved.
         </p>
       </div>
     </footer>
