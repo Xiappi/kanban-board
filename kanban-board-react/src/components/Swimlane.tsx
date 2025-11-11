@@ -216,58 +216,57 @@ export default function Swimlane({
             ))}
           </div>
         </div>
-      </div>
-      {/* Footer (fixed height area below body) */}
-      <div
-        ref={footerRef}
-        className={`flex flex-col items-center justify-between px-3 py-2 rounded-b-lg ${bg} ${border} `}
-      >
-        {totalPages > 1 && (
-          <div className="flex items-center gap-2">
-            <button
-              className={`cursor-pointer hover:bg-white/20 px-3 py-1 border rounded disabled:opacity-50 ${text}`}
-              disabled={page === 0}
-              onClick={() => animateTo(0)}
-              aria-label="First page"
-            >
-              <Icon path={mdiChevronDoubleLeft} size={0.75}></Icon>
-            </button>
-            <button
-              className={`cursor-pointer hover:bg-white/20  px-3 py-1 border rounded disabled:opacity-50 ${text}`}
-              disabled={page === 0}
-              onClick={() => animateTo(page - 1)}
-              aria-label="Previous page"
-            >
-              <Icon path={mdiChevronLeft} size={0.75}></Icon>
-            </button>
-            <button
-              className={`cursor-pointer hover:bg-white/20  px-3 py-1 border rounded disabled:opacity-50 ${text}`}
-              disabled={page >= totalPages - 1}
-              onClick={() => animateTo(page + 1)}
-              aria-label="Next page"
-            >
-              <Icon path={mdiChevronRight} size={0.75}></Icon>
-            </button>
-            <button
-              className={`cursor-pointer hover:bg-white/20 px-3 py-1 border rounded disabled:opacity-50 ${text}`}
-              disabled={page >= totalPages - 1}
-              onClick={() => animateTo(totalPages - 1)}
-              aria-label="Last page"
-            >
-              <Icon path={mdiChevronDoubleRight} size={0.75}></Icon>
-            </button>
-          </div>
-        )}
+        <div
+          ref={footerRef}
+          className={`flex flex-col items-center justify-between px-3 py-2 rounded-b-lg ${bg} ${border} `}
+        >
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <button
+                className={`cursor-pointer hover:bg-white/20 px-3 py-1 border rounded disabled:opacity-50 ${text}`}
+                disabled={page === 0}
+                onClick={() => animateTo(0)}
+                aria-label="First page"
+              >
+                <Icon path={mdiChevronDoubleLeft} size={0.75}></Icon>
+              </button>
+              <button
+                className={`cursor-pointer hover:bg-white/20  px-3 py-1 border rounded disabled:opacity-50 ${text}`}
+                disabled={page === 0}
+                onClick={() => animateTo(page - 1)}
+                aria-label="Previous page"
+              >
+                <Icon path={mdiChevronLeft} size={0.75}></Icon>
+              </button>
+              <button
+                className={`cursor-pointer hover:bg-white/20  px-3 py-1 border rounded disabled:opacity-50 ${text}`}
+                disabled={page >= totalPages - 1}
+                onClick={() => animateTo(page + 1)}
+                aria-label="Next page"
+              >
+                <Icon path={mdiChevronRight} size={0.75}></Icon>
+              </button>
+              <button
+                className={`cursor-pointer hover:bg-white/20 px-3 py-1 border rounded disabled:opacity-50 ${text}`}
+                disabled={page >= totalPages - 1}
+                onClick={() => animateTo(totalPages - 1)}
+                aria-label="Last page"
+              >
+                <Icon path={mdiChevronDoubleRight} size={0.75}></Icon>
+              </button>
+            </div>
+          )}
 
-        <div className={`text-xs my-2 ${text}`}>
-          Page {page + 1} of {totalPages} - Showing{" "}
-          {items.length === 0
-            ? 0
-            : `${page * pageSize + 1}-${Math.min(
-                (page + 1) * pageSize,
-                items.length
-              )}`}{" "}
-          of {items.length}
+          <div className={`text-xs my-2 ${text}`}>
+            Page {page + 1} of {totalPages} - Showing{" "}
+            {items.length === 0
+              ? 0
+              : `${page * pageSize + 1}-${Math.min(
+                  (page + 1) * pageSize,
+                  items.length
+                )}`}{" "}
+            of {items.length}
+          </div>
         </div>
       </div>
     </>
